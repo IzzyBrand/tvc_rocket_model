@@ -25,14 +25,14 @@ def ddt(u, t):
 
 	c = control(u)				  # the control input
 	v2 = (xdot**2 + ydot**2)	  # the speed squared
-	phi = np.arctan2(xdot, ydot) # the of the velocity vector away from vertical
+	phi = np.arctan2(-xdot, ydot) # the of the velocity vector away from vertical
 
 	linear_drag = abs(v2*sin(theta-phi)*Dv)
 	rotational_drag = abs(thetadot)*thetadot*Dw
 
-	xddot = -sin(theta+c)*T - sin(phi)*linear_drag
+	xddot = -sin(theta+c)*T + sin(phi)*linear_drag
 
-	yddot = cos(theta+c)*T - cos(phi)*linear_drag
+	yddot = cos(theta+c)*T - cos(phi)*linear_drag - g
 
 	thetaddot = sin(c)*T*L/I - rotational_drag/I + sin(theta-phi)*l*v2*Dv/I
 
@@ -40,7 +40,7 @@ def ddt(u, t):
 
 
 if __name__ == '__main__':
-	u0 = np.array([0, 0, 0, 0, 10, -2], dtype=float)
+	u0 = np.array([0, 0, np.pi/2, 0, 10, 0], dtype=float)
 	ts = np.linspace(0, 10, 10000)
 	us = odeint(ddt, u0, ts)
 
@@ -51,9 +51,9 @@ if __name__ == '__main__':
 		plt.plot(ts, data, label=label)
 
 	x, y, theta, xdot, ydot, thetadot = us.T
-	psi = np.arctan2(-xdot, ydot) # the of the velocity vector away from vertical
+	phi = np.arctan2(-xdot, ydot) # the of the velocity vector away from vertical
 
-	plt.plot(ts, psi, label='psi')
+	plt.plot(ts, phi, label='phi')
 
 	plt.legend()
 	plt.show()
