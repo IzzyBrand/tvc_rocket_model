@@ -9,7 +9,7 @@ cos = np.cos
 
 # state is [x, y, theta, xdot, ydot, thetadot]
 
-T = 10.        # thrust
+T = 0.        # thrust
 L = -1.        # length from CG of rocket to the motor
 Dv = 0.1        # the linear drag on the rocket
 Dw = 1.     # the rotational drag on the rocket
@@ -19,7 +19,7 @@ g = 9.8     # acceleration due to gravity
 
 
 dt = 0.001
-duration = 10
+duration = 5
 framerate = 20
 
 # a function that returns a thrust angle based on the rocket's state
@@ -57,9 +57,9 @@ def animate(x, y, theta):
         plt.ylim(np.min(y)-10, np.max(y)+10)
         plt.gca().set_aspect('equal', adjustable='box')
 
-        size = 10
-        arrow = mpatches.Arrow(x[t], y[t],
-                               -size*np.sin(theta[t]), size*np.cos(theta[t]), width=size)
+        size = 1
+        arrow = mpatches.FancyArrow(x[t], y[t], -size*np.sin(theta[t]), size*np.cos(theta[t]),
+                                head_width=size, width=size)
         ax.add_patch(arrow)
 
     ani = FuncAnimation(fig, update, frames=int(len(x)*(framerate*dt)-1), interval=1000./framerate)
@@ -68,7 +68,7 @@ def animate(x, y, theta):
 
 if __name__ == '__main__':
 
-    u0 = np.array([0, 0, 0, 10, 0, 0], dtype=float)
+    u0 = np.array([0, 0, 0, 4, 25, 0], dtype=float)
     ts = np.linspace(0, duration, duration/dt)
     us = odeint(ddt, u0, ts)
 
