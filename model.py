@@ -9,6 +9,7 @@ cos = np.cos
 
 # state is [x, y, theta, xdot, ydot, thetadot]
 
+# dynamics parameters
 T = 0.        # thrust
 L = -1.        # length from CG of rocket to the motor
 Dv = 0.1        # the linear drag on the rocket
@@ -17,15 +18,17 @@ I = 1.        # the rotational inertia of the rocket
 l = -0.5        # the distance from the CG of the rocket to the center of aerodynamic pressure
 g = 9.8     # acceleration due to gravity
 
-
+# simulation/rendering parameters
 dt = 0.001
 duration = 5
 framerate = 20
+rocket_size = 1
 
 # a function that returns a thrust angle based on the rocket's state
 def control(u):
     return 0
 
+# the rocket dynamics
 def ddt(u, t):
     x, y, theta, xdot, ydot, thetadot = u
 
@@ -44,6 +47,7 @@ def ddt(u, t):
 
     return np.array([xdot, ydot, thetadot, xddot, yddot, thetaddot])
 
+# draw a matplotlib animation of the rocket trajectory
 def animate(x, y, theta):
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -57,9 +61,10 @@ def animate(x, y, theta):
         plt.ylim(np.min(y)-10, np.max(y)+10)
         plt.gca().set_aspect('equal', adjustable='box')
 
-        size = 1
-        arrow = mpatches.FancyArrow(x[t], y[t], -size*np.sin(theta[t]), size*np.cos(theta[t]),
-                                head_width=size, width=size)
+
+        # rotate theta by 90 degrees because we measure theta=0 from the vertical
+        arrow = mpatches.FancyArrow(x[t], y[t], rocket_size*np.cos(theta[t]+np.pi/2), np.sin(theta[t]+np.pi/2),
+                                head_width=rocket_size, width=rocket_size)
         ax.add_patch(arrow)
 
     ani = FuncAnimation(fig, update, frames=int(len(x)*(framerate*dt)-1), interval=1000./framerate)
