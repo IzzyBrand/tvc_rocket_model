@@ -9,18 +9,19 @@ cos = np.cos
 
 # state is [x, y, theta, xdot, ydot, thetadot]
 
-T = 0.        # thrust
+T = 9.8        # thrust
 L = -1.        # length from CG of rocket to the motor
 Dv = 0.1        # the linear drag on the rocket
 Dw = 1.     # the rotational drag on the rocket
 I = 1.        # the rotational inertia of the rocket
 l = -0.5        # the distance from the CG of the rocket to the center of aerodynamic pressure
 g = 9.8     # acceleration due to gravity
+m = 1
 
 
 dt = 0.001
 duration = 5
-framerate = 20
+framerate = 30
 
 # a function that returns a thrust angle based on the rocket's state
 def control(u):
@@ -36,11 +37,11 @@ def ddt(u, t):
     linear_drag = abs(v2*sin(theta-phi)*Dv)
     rotational_drag = abs(thetadot)*thetadot*Dw
 
-    xddot = -sin(theta+c)*T + sin(phi)*linear_drag
+    xddot = (1/m) * (-sin(theta+c)*T + sin(phi)*linear_drag)
 
-    yddot = cos(theta+c)*T - cos(phi)*linear_drag - g
+    yddot = (1/m) * (cos(theta+c)*T - cos(phi)*linear_drag) - g
 
-    thetaddot = sin(c)*T*L/I - rotational_drag/I + sin(theta-phi)*l*v2*Dv/I
+    thetaddot = (1/I) * (sin(c)*T*L - rotational_drag + sin(theta-phi)*l*v2*Dv)
 
     return np.array([xdot, ydot, thetadot, xddot, yddot, thetaddot])
 
@@ -68,7 +69,7 @@ def animate(x, y, theta):
 
 if __name__ == '__main__':
 
-    u0 = np.array([0, 0, 0, 4, 25, 0], dtype=float)
+    u0 = np.array([0, 0, 0.05, 0, 0, 0], dtype=float)
     ts = np.linspace(0, duration, duration/dt)
     us = odeint(ddt, u0, ts)
 
