@@ -23,7 +23,6 @@ m = 1
 dt = 0.001
 duration = 10
 framerate = 20
-rocket_size = 1
 
 # a function that returns a thrust angle based on the rocket's state
 def control(u):
@@ -38,7 +37,7 @@ def control(u):
 
 def thrust(u):
     x, y, theta, xdot, ydot, thetadot = u
-    return np.clip(g - 0.1*y - ydot, 0, 50)
+    return np.clip(g - 0.05*y - 0.5*ydot, 0, 50)
 
 # the rocket dynamics
 def ddt(u, t):
@@ -61,7 +60,7 @@ def ddt(u, t):
     return np.array([xdot, ydot, thetadot, xddot, yddot, thetaddot])
 
 # draw a matplotlib animation of the rocket trajectory
-def animate(x, y, theta):
+def animate(us):
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
@@ -70,18 +69,32 @@ def animate(x, y, theta):
 
         ax.clear()
 
-        plt.xlim(np.min(x)-10, np.max(x)+10)
-        plt.ylim(np.min(y)-10, np.max(y)+10)
+        plt.xlim(np.min(us[:,0])-10, np.max(us[:,0])+10)
+        plt.ylim(np.min(us[:,1])-10, np.max(us[:,1])+10)
         plt.gca().set_aspect('equal', adjustable='box')
 
+        draw_rocket(ax, us[t])
 
-        # rotate theta by 90 degrees because we measure theta=0 from the vertical
-        arrow = mpatches.FancyArrow(x[t], y[t], rocket_size*np.cos(theta[t]+np.pi/2), np.sin(theta[t]+np.pi/2),
-                                head_width=rocket_size, width=rocket_size)
-        ax.add_patch(arrow)
+        
 
-    ani = FuncAnimation(fig, update, frames=int(len(x)*(framerate*dt)-1), interval=1000./framerate)
+    ani = FuncAnimation(fig, update, frames=int(us.shape[0]*(framerate*dt)-1), interval=1000./framerate)
     plt.show()
+
+def draw_rocket(ax, u):
+
+    rocket_size = 1
+    thrust_size = 0.5
+
+    x, y, theta, xdot, ydot, thetadot = u
+    # rotate theta by 90 degrees because we measure theta=0 from the vertical
+    rocket_arrow = mpatches.FancyArrow(x, y, rocket_size*np.cos(theta+np.pi/2), np.sin(theta+np.pi/2),
+                            head_width=rocket_size, width=rocket_size, color='b')
+    ax.add_patch(rocket_arrow)
+
+    c = control(u)
+    thrust_arrow = mpatches.FancyArrow(x, y, thrust_size*np.cos(theta+c-np.pi/2), np.sin(theta+c-np.pi/2),
+                            head_width=thrust_size, width=thrust_size, color='r')
+    ax.add_patch(thrust_arrow)
 
 
 if __name__ == '__main__':
@@ -91,7 +104,7 @@ if __name__ == '__main__':
     theta       = 0
     x_dot       = 0
     y_dot       = 0
-    theta_dot   = 0
+    theta_dot   = -4
 
     u0 = np.array([x, y, theta, x_dot, y_dot, theta_dot], dtype=float)
     ts = np.linspace(0, duration, duration/dt)
@@ -99,7 +112,7 @@ if __name__ == '__main__':
 
     x, y, theta, xdot, ydot, thetadot = us.T
     phi = np.arctan2(-xdot, ydot) # the of the velocity vector away from vertical
-    animate(x, y, theta)
+    animate(us)
 
     # labels = ['x', 'y', 'theta', 'xdot', 'ydot', 'thetadot']
     # for label, data in zip(labels, us.T):
