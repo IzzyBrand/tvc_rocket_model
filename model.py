@@ -82,17 +82,18 @@ def animate(us):
 
 def draw_rocket(ax, u):
 
-    rocket_size = 1
+    rocket_size = 4
     thrust_size = 0.5
 
     x, y, theta, xdot, ydot, thetadot = u
     # rotate theta by 90 degrees because we measure theta=0 from the vertical
-    rocket_arrow = mpatches.FancyArrow(x, y, rocket_size*np.cos(theta+np.pi/2), np.sin(theta+np.pi/2),
-                            head_width=rocket_size, width=rocket_size, color='b')
+    rocket_arrow = mpatches.FancyArrow(x, y, rocket_size*np.cos(theta+np.pi/2), rocket_size*np.sin(theta+np.pi/2),
+                            head_width=rocket_size/4, width=rocket_size/4, color='b')
     ax.add_patch(rocket_arrow)
 
     c = control(u)
-    thrust_arrow = mpatches.FancyArrow(x, y, thrust_size*np.cos(theta+c-np.pi/2), np.sin(theta+c-np.pi/2),
+    T = thrust(u)
+    thrust_arrow = mpatches.FancyArrow(x, y, T*np.cos(theta+c-np.pi/2)/7., T*np.sin(theta+c-np.pi/2)/7.,
                             head_width=thrust_size, width=thrust_size, color='r')
     ax.add_patch(thrust_arrow)
 
