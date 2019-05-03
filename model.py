@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.integrate import odeint
 from matplotlib import pyplot as plt
+import matplotlib.animation as animation
 from matplotlib.animation import FuncAnimation
 import matplotlib.patches as mpatches
 
@@ -37,7 +38,7 @@ def control(u):
 
 def thrust(u):
     x, y, theta, xdot, ydot, thetadot = u
-    return np.clip(g - 0.05*y - 0.5*ydot, 0, 50)
+    return np.clip(g - 0.1*y - 10*ydot/y, 0, 50)
 
 # the rocket dynamics
 def ddt(u, t):
@@ -67,18 +68,27 @@ def animate(us):
     def update(t):
         t = int(t/(framerate*dt))
 
-        ax.clear()
+        # ax.clear()
 
         plt.xlim(np.min(us[:,0])-10, np.max(us[:,0])+10)
         plt.ylim(np.min(us[:,1])-10, np.max(us[:,1])+10)
         plt.gca().set_aspect('equal', adjustable='box')
+        plt.title('x={}, y={}, theta={}\ndx={}, dy={}, dtheta={}'.format(*us[0]))
 
+
+        ax.hlines(0, -100, 100, colors=['k'], zorder=-1)
         draw_rocket(ax, us[t])
-
+        ax.add_patch(mpatches.Ellipse([0.,0.],5.,1.))
         
 
     ani = FuncAnimation(fig, update, frames=int(us.shape[0]*(framerate*dt)-1), interval=1000./framerate)
     plt.show()
+
+    # Set up formatting for the movie files
+    # Writer = animation.writers['ffmpeg']
+    # writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+
+    # ani.save('easy_landing.mp4', writer=writer)
 
 def draw_rocket(ax, u):
 
@@ -88,7 +98,7 @@ def draw_rocket(ax, u):
     x, y, theta, xdot, ydot, thetadot = u
     # rotate theta by 90 degrees because we measure theta=0 from the vertical
     rocket_arrow = mpatches.FancyArrow(x, y, rocket_size*np.cos(theta+np.pi/2), rocket_size*np.sin(theta+np.pi/2),
-                            head_width=rocket_size/4, width=rocket_size/4, color='b')
+                            head_width=rocket_size/4, width=rocket_size/4, color='k')
     ax.add_patch(rocket_arrow)
 
     c = control(u)
@@ -100,12 +110,12 @@ def draw_rocket(ax, u):
 
 if __name__ == '__main__':
 
-    x           = 20
-    y           = 50
+    x           = 0
+    y           = 60
     theta       = 0
-    x_dot       = 0
+    x_dot       = 15
     y_dot       = 0
-    theta_dot   = -4
+    theta_dot   = 5
 
     u0 = np.array([x, y, theta, x_dot, y_dot, theta_dot], dtype=float)
     ts = np.linspace(0, duration, duration/dt)
