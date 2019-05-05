@@ -59,6 +59,7 @@ def animate(us, show_trail):
 
         if not show_trail:
             ax.clear()
+
         plt.xlim(np.min(us[:,0])-10, np.max(us[:,0])+10)
         plt.ylim(np.min(us[:,1])-10, np.max(us[:,1])+10)
         plt.gca().set_aspect('equal', adjustable='box')
@@ -68,7 +69,7 @@ def animate(us, show_trail):
         ax.hlines(0, -100, 100, colors=['k'], zorder=-1)
         draw_rocket(ax, us[t])
         ax.add_patch(mpatches.Ellipse([0.,0.],5.,1.))
-        
+
 
     ani = FuncAnimation(fig, update, frames=int(us.shape[0]*(framerate*dt)-1), interval=1000./framerate)
     plt.show()
@@ -101,6 +102,27 @@ def draw_rocket(ax, u):
             T*np.sin(theta+c-np.pi/2)/7., head_width=thrust_size, width=thrust_size, color='r')
     ax.add_patch(thrust_arrow)
 
+
+def plot_state(us, ts):
+    plt.rc('text', usetex=True)
+
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('time (s)')
+    ax1.set_ylabel('Position (m), Velocity (m/s)')
+
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Orientation (radians), Angular Velocity (radians/s)')
+
+    plt.title(r'Simulated Rocket State. $\mu$={}'.format(mu))
+
+    labels = ['x', 'y', 'theta', 'xdot', 'ydot', 'thetadot']
+    colors = ['r', 'g', 'b', 'r', 'g', 'b']
+    alphas = [1, 1, 1, 0.6, 0.6, 0.6]
+    for label, data, color, alpha in zip(labels, us.T, colors, alphas):
+        plt.plot(ts, data, label=label, c=color, alpha=alpha)
+
+    plt.legend()
+    plt.show()
 
 if __name__ == '__main__':
     # parse arguments
@@ -149,4 +171,10 @@ if __name__ == '__main__':
 
     # run animation
     animate(us, args.show_trail)
+
+    x, y, theta, xdot, ydot, thetadot = us.T
+    phi = np.arctan2(-xdot, ydot) # the of the velocity vector away from vertical
+
+    # animate(us)
+    plot_state(us, ts)
 
