@@ -5,47 +5,36 @@ import matplotlib.animation as animation
 from matplotlib.animation import FuncAnimation
 import matplotlib.patches as mpatches
 
+# imports for configuration
+import sys
+import argparse
+from config import config, angle_controllers, thrust_controllers
+
 sin = np.sin
 cos = np.cos
 
 # state is [x, y, theta, xdot, ydot, thetadot]
 
 # dynamics parameters
-# T = 11       # thrust
-L = -1.        # length from CG of rocket to the motor
-Dv = 0.        # the linear drag on the rocket
-Dw = 0.     # the rotational drag on the rocket
-I = 1.        # the rotational inertia of the rocket
-l = -0        # the distance from the CG of the rocket to the center of aerodynamic pressure
-g = 10     # acceleration due to gravity
-m = 1
+L = config['L']        # length from CG of rocket to the motor
+Dv = config['Dv']        # the linear drag on the rocket
+Dw = config['Dw']     # the rotational drag on the rocket
+I = config['I']        # the rotational inertia of the rocket
+l = config['l']        # the distance from the CG of the rocket to the center of aerodynamic pressure
+g = config['g']    # acceleration due to gravity
+m = config['m']
 
 # simulation/rendering parameters
-dt = 0.001
-duration = 10
-framerate = 20
-
-# a function that returns a thrust angle based on the rocket's state
-def control(u):
-    x, y, theta, xdot, ydot, thetadot = u
-
-    angle_control = theta + thetadot 
-    x_control = - 0.05*xdot - 0.01*x
-    return angle_control + x_control
-
-    # max_angle = np.pi/4
-    # return np.clip(10*theta, -max_angle, max_angle)
-
-def thrust(u):
-    x, y, theta, xdot, ydot, thetadot = u
-    return np.clip(g - 0.1*y - 10*ydot/y, 0, 50)
+dt = config['dt']
+duration = config['duration']
+framerate = config['framerate']
 
 # the rocket dynamics
-def ddt(u, t):
+def ddt(u, t, angle_control, thrust_control):
     x, y, theta, xdot, ydot, thetadot = u
 
-    T = thrust(u)
-    c = control(u)                  # the control input
+    T = thrust_control(u)
+    c = angle_control(u)                 # the control input
     v2 = (xdot**2 + ydot**2)      # the speed squared
     phi = np.arctan2(-xdot, ydot) # the of the velocity vector away from vertical
 
@@ -61,15 +50,15 @@ def ddt(u, t):
     return np.array([xdot, ydot, thetadot, xddot, yddot, thetaddot])
 
 # draw a matplotlib animation of the rocket trajectory
-def animate(us):
+def animate(us, show_trail):
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
     def update(t):
         t = int(t/(framerate*dt))
 
-        # ax.clear()
-
+        if not show_trail:
+            ax.clear()
         plt.xlim(np.min(us[:,0])-10, np.max(us[:,0])+10)
         plt.ylim(np.min(us[:,1])-10, np.max(us[:,1])+10)
         plt.gca().set_aspect('equal', adjustable='box')
@@ -91,44 +80,73 @@ def animate(us):
     # ani.save('easy_landing.mp4', writer=writer)
 
 def draw_rocket(ax, u):
+    # pull control functions from global scope
+    global angle_control, thrust_control
 
-    rocket_size = 4
-    thrust_size = 0.5
+    rocket_size = config['rocket_size']
+    thrust_size = config['thrust_size']
 
     x, y, theta, xdot, ydot, thetadot = u
+
     # rotate theta by 90 degrees because we measure theta=0 from the vertical
-    rocket_arrow = mpatches.FancyArrow(x, y, rocket_size*np.cos(theta+np.pi/2), rocket_size*np.sin(theta+np.pi/2),
-                            head_width=rocket_size/4, width=rocket_size/4, color='k')
+    rocket_arrow = mpatches.FancyArrow(x, y, rocket_size*np.cos(theta+np.pi/2),
+            rocket_size*np.sin(theta+np.pi/2), head_width=rocket_size/4, width=rocket_size/4,
+            color='k')
+
     ax.add_patch(rocket_arrow)
 
-    c = control(u)
-    T = thrust(u)
-    thrust_arrow = mpatches.FancyArrow(x, y, T*np.cos(theta+c-np.pi/2)/7., T*np.sin(theta+c-np.pi/2)/7.,
-                            head_width=thrust_size, width=thrust_size, color='r')
+    c = angle_control(u)
+    T = thrust_control(u)
+    thrust_arrow = mpatches.FancyArrow(x, y, T*np.cos(theta+c-np.pi/2)/7.,
+            T*np.sin(theta+c-np.pi/2)/7., head_width=thrust_size, width=thrust_size, color='r')
     ax.add_patch(thrust_arrow)
 
 
 if __name__ == '__main__':
+    # parse arguments
+    parser = argparse.ArgumentParser(description='Configure simulation')
+    parser.add_argument('--angle_control', type=str, default='none',
+            choices=angle_controllers.keys(),
+            help='choose preset function which takes in a state and returns thrust angle')
+    parser.add_argument('--thrust_control', type=str, default='none',
+            choices=thrust_controllers.keys(),
+            help='choose preset function which takes in a state and returns thrust magnitude')
+    parser.add_argument('--x',         nargs='?', type=int, const=True, default=0) 
+    # default y_0 to 1e-6 to avoid divide by zero errors
+    parser.add_argument('--y',         nargs='?', type=int, const=True, default=1e-6) 
+    parser.add_argument('--theta',     nargs='?', type=int, const=True, default=0) 
+    parser.add_argument('--xdot',     nargs='?', type=int, const=True, default=0) 
+    parser.add_argument('--ydot',     nargs='?', type=int, const=True, default=0) 
+    parser.add_argument('--thetadot', nargs='?', type=int, const=True, default=0) 
+    parser.add_argument('--show_trail', dest='show_trail', action='store_const', const=True,
+           default=False)
+    args = parser.parse_args()
 
-    x           = 0
-    y           = 60
-    theta       = 0
-    x_dot       = 15
-    y_dot       = 0
-    theta_dot   = 5
+    # get control functions
+    angle_control = angle_controllers[args.angle_control]
+    thrust_control = thrust_controllers[args.thrust_control]
 
+    # get initial conditions
+    x = args.x
+    y = args.y
+    x_dot = args.xdot
+    y_dot = args.ydot
+
+    # switch from degrees to radians
+    theta, theta_dot = np.radians(args.theta), np.radians(args.thetadot)
+
+    # set up controlled ddt
+    def controlled_ddt(u, t): return ddt(u, t, angle_control, thrust_control)
+
+    # run simulation using odeint
     u0 = np.array([x, y, theta, x_dot, y_dot, theta_dot], dtype=float)
-    ts = np.linspace(0, duration, duration/dt)
-    us = odeint(ddt, u0, ts)
+    ts = np.linspace(0, duration, int(duration/dt))
+    us = odeint(controlled_ddt, u0, ts)
 
+    # unpack state and calculate phi
     x, y, theta, xdot, ydot, thetadot = us.T
-    phi = np.arctan2(-xdot, ydot) # the of the velocity vector away from vertical
-    animate(us)
+    phi = np.arctan2(-xdot, ydot) # angle of the velocity vector from vertical
 
-    # labels = ['x', 'y', 'theta', 'xdot', 'ydot', 'thetadot']
-    # for label, data in zip(labels, us.T):
-    #     plt.plot(ts, data, label=label)
+    # run animation
+    animate(us, args.show_trail)
 
-    # plt.plot(ts, phi, label='phi')
-    # plt.legend()
-    # plt.show()
