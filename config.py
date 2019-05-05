@@ -10,6 +10,7 @@ config = {
     "l"  : 0.,
     "g"  : 10.,
     "m"  : 1.,
+    "mu" : -0.01,
 
     # simulation/rendering parameters
     "dt" : 0.001,
@@ -20,12 +21,14 @@ config = {
     "rocket_size" : 4,
     "thrust_size" : 0.5
 }
+g = config['g']
+mu = config['mu']
 
 def angle_p(u):
     x, y, theta, xdot, ydot, thetadot = u
 
     angle_control = theta
-    x_control = -0.01*x
+    x_control = mu*x
 
     return angle_control + x_control
 
@@ -33,7 +36,7 @@ def angle_pd(u):
     x, y, theta, xdot, ydot, thetadot = u
 
     angle_control = theta + thetadot
-    x_control = -0.05*xdot - 0.01*x
+    x_control = mu*x - 0.05*xdot
 
     return angle_control + x_control
 
@@ -51,7 +54,7 @@ def thrust_pd(u):
     
     min_thrust = 0
     max_thrust = 50
-    thrust_control = np.clip(config['g'] - 0.1*y - 10*ydot, min_thrust, max_thrust)
+    thrust_control = np.clip(g - 0.1*y - 10*ydot, min_thrust, max_thrust)
 
     return thrust_control
 
@@ -60,7 +63,7 @@ def thrust_non_linear(u):
 
     min_thrust = 0
     max_thrust = 50
-    thrust_control = np.clip(config['g'] - 0.1*y - 10*ydot/y, min_thrust, max_thrust)
+    thrust_control = np.clip(g - 0.1*y - 10*ydot/y, min_thrust, max_thrust)
 
     return thrust_control
 

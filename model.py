@@ -103,7 +103,7 @@ def draw_rocket(ax, u):
     ax.add_patch(thrust_arrow)
 
 
-def plot_state(us, ts):
+def plot_state(us, ts, mu):
     plt.rc('text', usetex=True)
 
     fig, ax1 = plt.subplots()
@@ -176,5 +176,5 @@ if __name__ == '__main__':
     phi = np.arctan2(-xdot, ydot) # the of the velocity vector away from vertical
 
     # animate(us)
-    plot_state(us, ts)
+    plot_state(us, ts, config['mu'])
 
