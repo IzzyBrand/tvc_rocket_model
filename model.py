@@ -19,6 +19,7 @@ I = 1.        # the rotational inertia of the rocket
 l = -0        # the distance from the CG of the rocket to the center of aerodynamic pressure
 g = 10     # acceleration due to gravity
 m = 1
+mu = -0.1
 
 # simulation/rendering parameters
 dt = 0.001
@@ -29,8 +30,8 @@ framerate = 20
 def control(u):
     x, y, theta, xdot, ydot, thetadot = u
 
-    angle_control = theta + thetadot 
-    x_control = - 0.05*xdot - 0.01*x
+    angle_control =  theta + thetadot
+    x_control =  - mu * xdot
     return angle_control + x_control
 
     # max_angle = np.pi/4
@@ -38,7 +39,7 @@ def control(u):
 
 def thrust(u):
     x, y, theta, xdot, ydot, thetadot = u
-    return np.clip(g - 0.1*y - 10*ydot/y, 0, 50)
+    return np.clip(g - ydot, 0, 50)
 
 # the rocket dynamics
 def ddt(u, t):
@@ -68,7 +69,7 @@ def animate(us):
     def update(t):
         t = int(t/(framerate*dt))
 
-        # ax.clear()
+        ax.clear()
 
         plt.xlim(np.min(us[:,0])-10, np.max(us[:,0])+10)
         plt.ylim(np.min(us[:,1])-10, np.max(us[:,1])+10)
@@ -79,7 +80,7 @@ def animate(us):
         ax.hlines(0, -100, 100, colors=['k'], zorder=-1)
         draw_rocket(ax, us[t])
         ax.add_patch(mpatches.Ellipse([0.,0.],5.,1.))
-        
+
 
     ani = FuncAnimation(fig, update, frames=int(us.shape[0]*(framerate*dt)-1), interval=1000./framerate)
     plt.show()
@@ -108,27 +109,45 @@ def draw_rocket(ax, u):
     ax.add_patch(thrust_arrow)
 
 
+def plot_state(us, ts):
+    plt.rc('text', usetex=True)
+
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('time (s)')
+    ax1.set_ylabel('Position (m), Velocity (m/s)')
+
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Orientation (radians), Angular Velocity (radians/s)')
+
+    plt.title(r'Simulated Rocket State. $\mu$={}'.format(mu))
+
+    labels = ['x', 'y', 'theta', 'xdot', 'ydot', 'thetadot']
+    colors = ['r', 'g', 'b', 'r', 'g', 'b']
+    alphas = [1, 1, 1, 0.6, 0.6, 0.6]
+    for label, data, color, alpha in zip(labels, us.T, colors, alphas):
+        plt.plot(ts, data, label=label, c=color, alpha=alpha)
+
+    plt.legend()
+    plt.show()
+
 if __name__ == '__main__':
 
     x           = 0
-    y           = 60
+    y           = 3
     theta       = 0
-    x_dot       = 15
+    x_dot       = 2
     y_dot       = 0
-    theta_dot   = 5
+    theta_dot   = 0
 
     u0 = np.array([x, y, theta, x_dot, y_dot, theta_dot], dtype=float)
     ts = np.linspace(0, duration, duration/dt)
     us = odeint(ddt, u0, ts)
 
+
     x, y, theta, xdot, ydot, thetadot = us.T
     phi = np.arctan2(-xdot, ydot) # the of the velocity vector away from vertical
-    animate(us)
 
-    # labels = ['x', 'y', 'theta', 'xdot', 'ydot', 'thetadot']
-    # for label, data in zip(labels, us.T):
-    #     plt.plot(ts, data, label=label)
+    # animate(us)
+    plot_state(us, ts)
 
-    # plt.plot(ts, phi, label='phi')
-    # plt.legend()
-    # plt.show()
+
