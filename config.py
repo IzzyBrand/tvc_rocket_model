@@ -10,7 +10,7 @@ config = {
     "l"  : 0.,
     "g"  : 10.,
     "m"  : 1.,
-    "mu" : -0.01,
+    "mu" : 0.2,
 
     # simulation/rendering parameters
     "dt" : 0.001,
@@ -22,6 +22,7 @@ config = {
     "thrust_size" : 0.5
 }
 g = config['g']
+m = config['m']
 mu = config['mu']
 
 def angle_p(u):
@@ -70,15 +71,25 @@ def thrust_non_linear(u):
 def no_control(u):
     return 0
 
+def angle_stable(u):
+    x, y, theta, xdot, ydot, thetadot = u
+    return theta + thetadot - mu*xdot
+
+def thrust_stable(u):
+    x, y, theta, xdot, ydot, thetadot = u
+    return m*g - ydot
+
 angle_controllers = {
     'p': angle_p,
     'pd': angle_pd,
-    'none': no_control
+    'none': no_control,
+    'stable': angle_stable
 }
 
 thrust_controllers = {
     'p': thrust_p,
     'pd': thrust_pd,
     'non-linear': thrust_non_linear,
-    'none': no_control
+    'none': no_control,
+    'stable': thrust_stable
 }

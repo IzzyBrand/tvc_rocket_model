@@ -133,13 +133,13 @@ if __name__ == '__main__':
     parser.add_argument('--thrust_control', type=str, default='none',
             choices=thrust_controllers.keys(),
             help='choose preset function which takes in a state and returns thrust magnitude')
-    parser.add_argument('--x',         nargs='?', type=int, const=True, default=0) 
+    parser.add_argument('--x',         nargs='?', type=float, const=True, default=0) 
     # default y_0 to 1e-6 to avoid divide by zero errors
-    parser.add_argument('--y',         nargs='?', type=int, const=True, default=1e-6) 
-    parser.add_argument('--theta',     nargs='?', type=int, const=True, default=0) 
-    parser.add_argument('--xdot',     nargs='?', type=int, const=True, default=0) 
-    parser.add_argument('--ydot',     nargs='?', type=int, const=True, default=0) 
-    parser.add_argument('--thetadot', nargs='?', type=int, const=True, default=0) 
+    parser.add_argument('--y',         nargs='?', type=float, const=True, default=1e-6) 
+    parser.add_argument('--theta',     nargs='?', type=float, const=True, default=0) 
+    parser.add_argument('--xdot',     nargs='?', type=float, const=True, default=0) 
+    parser.add_argument('--ydot',     nargs='?', type=float, const=True, default=0) 
+    parser.add_argument('--thetadot', nargs='?', type=float, const=True, default=0) 
     parser.add_argument('--show_trail', dest='show_trail', action='store_const', const=True,
            default=False)
     args = parser.parse_args()
