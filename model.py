@@ -9,6 +9,7 @@ import matplotlib.patches as mpatches
 import sys
 import argparse
 from config import config, angle_controllers, thrust_controllers
+from presets import presets
 
 sin = np.sin
 cos = np.cos
@@ -113,7 +114,7 @@ def plot_state(us, ts, mu):
     ax2 = ax1.twinx()
     ax2.set_ylabel('Orientation (radians), Angular Velocity (radians/s)')
 
-    plt.title(r'Simulated Rocket State. $\mu$={}'.format(mu))
+    plt.title(r'Simulated Rocket State')
 
     labels = ['x', 'y', 'theta', 'xdot', 'ydot', 'thetadot']
     colors = ['r', 'g', 'b', 'r', 'g', 'b']
@@ -124,9 +125,10 @@ def plot_state(us, ts, mu):
     plt.legend()
     plt.show()
 
-if __name__ == '__main__':
-    # parse arguments
+def parse_args():
+    """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='Configure simulation')
+    parser.add_argument('--preset', type=str, default=None, choices=presets.keys())
     parser.add_argument('--angle_control', type=str, default='none',
             choices=angle_controllers.keys(),
             help='choose preset function which takes in a state and returns thrust angle')
@@ -142,20 +144,38 @@ if __name__ == '__main__':
     parser.add_argument('--thetadot', nargs='?', type=int, const=True, default=0) 
     parser.add_argument('--show_trail', dest='show_trail', action='store_const', const=True,
            default=False)
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    # get control functions
-    angle_control = angle_controllers[args.angle_control]
-    thrust_control = thrust_controllers[args.thrust_control]
 
-    # get initial conditions
-    x = args.x
-    y = args.y
-    x_dot = args.xdot
-    y_dot = args.ydot
+if __name__ == '__main__':
+    # parse arguments
+    args = parse_args()
+    if args.preset == None:
+        # get control functions
+        angle_control = angle_controllers[args.angle_control]
+        thrust_control = thrust_controllers[args.thrust_control]
 
-    # switch from degrees to radians
-    theta, theta_dot = np.radians(args.theta), np.radians(args.thetadot)
+        # get initial conditions
+        x = args.x
+        y = args.y
+        x_dot = args.xdot
+        y_dot = args.ydot
+
+        # switch from degrees to radians
+        theta, theta_dot = np.radians(args.theta), np.radians(args.thetadot)
+    else:
+        preset = presets[args.preset]
+        # get control functions
+        angle_control = angle_controllers[preset['angle_control']]
+        thrust_control = thrust_controllers[preset['thrust_control']]
+
+        # get intial conditions
+        x = preset['x']
+        y = preset['y']
+        x_dot = preset['xdot']
+        y_dot = preset['ydot']
+        theta = preset['theta']
+        theta_dot = preset['thetadot']
 
     # set up controlled ddt
     def controlled_ddt(u, t): return ddt(u, t, angle_control, thrust_control)
