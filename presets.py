@@ -2,9 +2,9 @@ presets = {
     'stable': {
         'angle_control': 'stable',
         'thrust_control': 'stable',
-        'x': 0,
-        'y': 0,
-        'xdot': 0.1,
+        'x': -1.0,
+        'y': 5,
+        'xdot': 2.0,
         'ydot': 0,
         'theta': 0,
         'thetadot': 0
@@ -12,9 +12,9 @@ presets = {
     'unstable': {
         'angle_control': 'unstable',
         'thrust_control': 'stable',
-        'x': 0,
-        'y': 0,
-        'xdot': 0.1,
+        'x': -1.0,
+        'y': 5,
+        'xdot': 2.0,
         'ydot': 0,
         'theta': 0,
         'thetadot': 0

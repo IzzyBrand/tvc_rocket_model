@@ -38,7 +38,7 @@ def angle_stable(u):
     x, y, theta, xdot, ydot, thetadot = u
 
     angle_control = theta + thetadot
-    x_control = -mu*xdot 
+    x_control = -0.25*xdot 
 
     return angle_control + x_control
 
@@ -46,7 +46,7 @@ def angle_unstable(u):
     x, y, theta, xdot, ydot, thetadot = u
 
     angle_control = theta + thetadot
-    x_control = -.75*xdot 
+    x_control = -.65*xdot 
 
     return angle_control + x_control
 
